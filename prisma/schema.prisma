@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Account_userId_fk")
+
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_fk")
+  @@map("account")
+}
+
+model session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique(map: "Session_sessionToken_key")
+  userId       String
+  expires      DateTime
+  user         user     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Session_userId_fk_2")
+
+  @@index([userId], map: "Session_userId_fk_2")
+  @@map("session")
+}
+
+model passwordLogs {
+  id       Int      @id @default(autoincrement())
+  userId   String
+  password String
+  user     user   @relation(fields: [userId], references: [id], onDelete: Cascade, map: "PasswordLogs_userId_fk")
+
+  @@index([userId], map: "PasswordLogs_userId_fk")
+  @@map("passwordLogs")
+}
+
+model email_breaches {
+  id          Int      @id @default(autoincrement())
+  userEmail   String   @db.VarChar(255)
+  domain      String   @db.VarChar(255)
+  company     String   @db.VarChar(255)
+  breach_date DateTime @db.Date
+  country     String   @db.VarChar(255)
+
+  @@map("email_breaches")
+}
+
+model tool_logs {
+  id          Int      @id @default(autoincrement())
+  toolName    String   @db.VarChar(255)
+  useDate     String   @db.VarChar(255)
+
+  @@map("tool_logs")
+}
+
+model user {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String?        @unique(map: "User_email_key")
+  emailVerified DateTime?
+  image         String?
+  nacionality   String?
+  profession    String?
+  validadeUser  Boolean        @default(false)
+  account       account[]
+  session       session[]
+  passwordLogs  passwordLogs[]
+
+  @@map("user")
+}
+
+model verificationToken {
+  identifier String
+  token      String   @unique(map: "VerificationToken_token_key")
+  expires    DateTime
+
+  @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+  @@map("verificationtoken")
+}
+
+model logs {
+  id     Int     @id @default(autoincrement())
+  userId String?
+  toolId Int?
+}
+
+model tools {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(255)
+}
